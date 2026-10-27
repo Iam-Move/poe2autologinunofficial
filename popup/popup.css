@@ -84,6 +84,7 @@ body {
 .switch input:checked + .switch__track { background: var(--accent); }
 .switch input:checked + .switch__track .switch__thumb { transform: translateX(18px); }
 .switch input:focus-visible + .switch__track { outline: 2px solid var(--fg-dim); outline-offset: 2px; }
+.switch input:disabled + .switch__track { opacity: 0.4; cursor: not-allowed; }
 
 /* ── 탭 ── */
 .tabs { display: flex; border-bottom: 1px solid var(--border); }
@@ -177,6 +178,8 @@ input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-col
 .inputgroup .unit { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); color: var(--fg-dim); font-size: 11px; pointer-events: none; }
 .inputgroup input { padding-right: 32px; }
 .hint { margin: 5px 0 0; color: var(--fg-dim); font-size: 11.5px; }
+.field--toggle { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.field--toggle .switch { margin: 2px 0 0; }
 .saved { margin: 0; color: var(--ok); font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.2s; }
 .saved.is-on { opacity: 1; }
 

@@ -416,6 +416,7 @@
           currencies = await loadCurrencies();
           if (seq !== renderSeq) return;
           renderRows(err.cached.rows, currencies, league);
+          markSeen(league, err.cached.rows);
           const bar = notice('notice--warn', '');
           startCountdown(bar, err.until, () => {
             bar.textContent = `${relativeTime(new Date(err.cached.at).toISOString())} 받아 둔 내역입니다. ↻ 로 새로 불러올 수 있습니다.`;
@@ -432,6 +433,19 @@
     if (seq !== renderSeq) return; // 더 최근 요청이 있으면 버린다
 
     renderRows(result.rows, currencies, league);
+    markSeen(league, result.rows);
+  }
+
+  /** 내역을 봤다고 background 에 알린다 -> 새 판매 배지를 0으로, 이 리그를 감시 대상으로. */
+  function markSeen(league, rows) {
+    const latest = rows.reduce((max, r) => Math.max(max, Date.parse(r.time) || 0), 0);
+    try {
+      chrome.runtime.sendMessage({ type: 'historySeen', league, latest }, () => {
+        void chrome.runtime.lastError;
+      });
+    } catch (_) {
+      /* 확장이 새로고침된 직후라 연결이 끊긴 경우 - 무시 */
+    }
   }
 
   function renderRows(rows, currencies, league) {
@@ -594,7 +608,10 @@
 
   /* ---------- 메뉴 버튼 주입 ---------- */
 
+  let enabled = false; // 팝업 설정의 '거래소 History 버튼'
+
   function injectButton() {
+    if (!enabled) return;
     const menu = document.querySelector('ul.nav.nav-tabs.account');
     if (!menu || menu.querySelector('li.menu-history')) return;
 
@@ -611,13 +628,24 @@
     log('History 버튼 추가');
   }
 
+  function removeButton() {
+    document.querySelectorAll('li.menu-history').forEach((li) => li.remove());
+    closeUi();
+  }
+
+  function apply(on) {
+    enabled = on;
+    if (on) injectButton();
+    else removeButton();
+  }
+
   // 사이트(Vue)가 마운트하면서 메뉴 DOM 을 템플릿째 다시 만들기 때문에,
   // 버튼에 직접 단 리스너는 사라진다 -> document 캡처 단계에서 위임 처리한다.
   document.addEventListener(
     'click',
     (e) => {
       const target = e.target instanceof Element ? e.target : null;
-      if (!target || !target.closest('li.menu-history')) return;
+      if (!enabled || !target || !target.closest('li.menu-history')) return;
       e.preventDefault();
       e.stopPropagation(); // 사이트의 탭 전환 핸들러로 넘기지 않는다
       openUi();
@@ -625,7 +653,11 @@
     true
   );
 
-  injectButton();
+  chrome.storage.sync.get({ historyEnabled: true }, (cfg) => apply(cfg.historyEnabled !== false));
+  // 팝업에서 토글하면 열린 탭에도 바로 반영한다
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'sync' && changes.historyEnabled) apply(changes.historyEnabled.newValue !== false);
+  });
   // 거래소는 SPA 라 메뉴가 다시 그려질 수 있다 -> 사라지면 다시 붙인다
   new MutationObserver(injectButton).observe(document.documentElement, {
     childList: true,

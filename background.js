@@ -8,6 +8,8 @@ const DEFAULTS = {
   kakaoEmail: '', // 설치 직후에는 비어 있다. 사용자가 팝업 설정에서 직접 입력한다.
   stepTimeoutMs: 8000,
   maxAttempts: 3,
+  historyEnabled: true, // 웹 거래소에 History 버튼 표시
+  saleBadgeEnabled: false, // 주기적으로 판매 내역을 확인해 새 판매 개수를 배지에 표시
 };
 const FLOW_TTL_MS = 120000; // 이 시간이 지나면 새 플로우로 간주
 const LAUNCH_TTL_MS = 180000; // 게임 시작 요청 유효 시간 (로그인 왕복 포함)
@@ -71,8 +73,23 @@ async function setLastResult(result) {
 
 /** 배지 문구 지정. 빈 문자열이면 배지를 지운다. */
 async function setBadge(text, color = '#d93025') {
+  // 로그인 상태 배지(! / ?)가 없을 때는 새 판매 개수를 보여준다
+  if (!text) {
+    const { sales } = await chrome.storage.local.get({ sales: null });
+    if (sales && sales.count > 0) {
+      text = sales.count > 99 ? '99+' : String(sales.count);
+      color = SALE_BADGE_COLOR;
+    }
+  }
   await chrome.action.setBadgeText({ text });
   if (text) await chrome.action.setBadgeBackgroundColor({ color });
+}
+
+/** 판매 개수만 바뀌었을 때: ! / ? 가 떠 있으면 그대로 두고, 아니면 숫자를 갱신한다. */
+async function refreshSaleBadge() {
+  const badge = await chrome.action.getBadgeText({});
+  if (badge === '!' || badge === '?') return;
+  await setBadge('');
 }
 
 async function notify(id, title, message) {
@@ -114,6 +131,110 @@ async function resetFlow({ log = true } = {}) {
   }
   if (log) await addLog('info', '중단 상태를 초기화했습니다. 다시 시도할 수 있습니다.');
 }
+
+/* ---------- 새 판매 배지 ---------- */
+
+// 거래소 API 는 요청 한도가 빡빡하다 -> 30분에 1회만 확인한다.
+const SALE_ALARM = 'kal-sale-check';
+const SALE_PERIOD_MIN = 30;
+const SALE_BADGE_COLOR = '#188038';
+const HISTORY_API = 'https://poe.kakaogames.com/api/trade2/history/';
+const DEFAULT_RETRY_SEC = 60;
+
+/** { league, seenTime(ms), count, blockedUntil(ms) } */
+async function getSales() {
+  const { sales } = await chrome.storage.local.get({ sales: null });
+  return { league: null, seenTime: 0, count: 0, blockedUntil: 0, ...(sales || {}) };
+}
+
+async function setSales(sales) {
+  await chrome.storage.local.set({ sales });
+}
+
+/** 배지 알림 설정에 맞춰 알람을 켜거나 끈다. */
+async function syncSaleAlarm() {
+  const cfg = await chrome.storage.sync.get(DEFAULTS);
+  if (cfg.historyEnabled && cfg.saleBadgeEnabled) {
+    const alarm = await chrome.alarms.get(SALE_ALARM);
+    if (!alarm) await chrome.alarms.create(SALE_ALARM, { periodInMinutes: SALE_PERIOD_MIN });
+    return;
+  }
+  await chrome.alarms.clear(SALE_ALARM);
+  const sales = await getSales();
+  if (sales.count) {
+    await setSales({ ...sales, count: 0 });
+    await refreshSaleBadge();
+  }
+}
+
+/** content/history.js 의 throttleFromHeaders 와 같은 규칙: 남은 횟수가 1번 이하면 그 구간만큼 쉰다. */
+function rateLimitWaitSec(headers) {
+  const rules = (headers.get('X-Rate-Limit-Rules') || '').split(',').map((s) => s.trim());
+  let waitSec = 0;
+  for (const rule of rules.filter(Boolean)) {
+    const limits = (headers.get(`X-Rate-Limit-${rule}`) || '').split(',');
+    const states = (headers.get(`X-Rate-Limit-${rule}-State`) || '').split(',');
+    limits.forEach((limit, i) => {
+      const [max, period] = limit.split(':').map(Number);
+      const [hits] = (states[i] || '').split(':').map(Number);
+      if (!max || !period || !Number.isFinite(hits)) return;
+      if (hits >= max - 1) waitSec = Math.max(waitSec, period);
+    });
+  }
+  return waitSec;
+}
+
+async function checkSales() {
+  const sales = await getSales();
+  // 거래소에서 History 를 한 번도 열지 않았으면 어느 리그를 볼지 모른다
+  if (!sales.league || Date.now() < sales.blockedUntil) return;
+
+  let res;
+  try {
+    res = await fetch(HISTORY_API + encodeURIComponent(sales.league), { credentials: 'include' });
+  } catch (err) {
+    console.warn('[KakaoAutoLogin] 판매 내역 확인 실패', err);
+    return;
+  }
+  if (res.status === 429) {
+    const sec = parseInt(res.headers.get('Retry-After'), 10) || DEFAULT_RETRY_SEC;
+    await setSales({ ...sales, blockedUntil: Date.now() + sec * 1000 });
+    console.warn(`[KakaoAutoLogin] 판매 내역 요청 제한(429) - ${sec}초 대기`);
+    return;
+  }
+  if (!res.ok) {
+    // 401/403 은 로그아웃 상태 -> 조용히 다음 확인을 기다린다
+    console.log('[KakaoAutoLogin] 판매 내역 확인 건너뜀: HTTP', res.status);
+    return;
+  }
+
+  const waitSec = rateLimitWaitSec(res.headers);
+  let rows;
+  try {
+    rows = (await res.json()).result || [];
+  } catch (err) {
+    console.warn('[KakaoAutoLogin] 판매 내역 응답을 읽지 못함', err);
+    return;
+  }
+  // 누적하지 않고 매번 다시 센다 (최근 100건 안에서 계산하므로 중복이 없다)
+  const count = rows.filter((r) => Date.parse(r.time) > sales.seenTime).length;
+  await setSales({
+    ...sales,
+    count,
+    blockedUntil: waitSec ? Date.now() + waitSec * 1000 : 0,
+  });
+  await refreshSaleBadge();
+}
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === SALE_ALARM) checkSales();
+});
+
+chrome.runtime.onInstalled.addListener(syncSaleAlarm);
+chrome.runtime.onStartup.addListener(syncSaleAlarm);
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && (changes.historyEnabled || changes.saleBadgeEnabled)) syncSaleAlarm();
+});
 
 /* ---------- 메시지 처리 ---------- */
 
@@ -211,6 +332,25 @@ async function handleMessage(message, sender) {
     case 'gameStarted':
       await addLog('success', '게임 시작 버튼 클릭');
       return { ok: true };
+
+    /* ---- 거래 내역 ---- */
+
+    /** 거래소에서 History 창을 열어 내역을 봤다 -> 그 리그를 감시하고 배지를 0으로. */
+    case 'historySeen': {
+      const sales = await getSales();
+      const league = message.league || sales.league;
+      const latest = Number(message.latest) || 0;
+      await setSales({
+        ...sales,
+        league,
+        // 같은 리그면 더 최근 시각을 유지 (캐시된 오래된 목록을 봐도 뒤로 가지 않게)
+        seenTime: league === sales.league ? Math.max(sales.seenTime, latest) : latest,
+        count: 0,
+      });
+      await refreshSaleBadge();
+      await syncSaleAlarm();
+      return { ok: true };
+    }
 
     /* ---- 팝업 전용 ---- */
 

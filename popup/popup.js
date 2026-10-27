@@ -5,6 +5,8 @@ const DEFAULTS = {
   kakaoEmail: '', // 설치 직후에는 비어 있다. 사용자가 설정 탭에서 직접 입력한다.
   stepTimeoutMs: 8000,
   maxAttempts: 3,
+  historyEnabled: true,
+  saleBadgeEnabled: false,
 };
 const TRADE_URL = 'https://poe.kakaogames.com/trade2';
 const GAME_URL = 'https://pathofexile2.kakaogames.com/main';
@@ -125,6 +127,9 @@ function renderSettings(cfg) {
   $('kakaoEmail').value = cfg.kakaoEmail;
   $('stepTimeoutMs').value = cfg.stepTimeoutMs;
   $('maxAttempts').value = cfg.maxAttempts;
+  $('historyEnabled').checked = cfg.historyEnabled;
+  $('saleBadgeEnabled').checked = cfg.saleBadgeEnabled;
+  $('saleBadgeEnabled').disabled = !cfg.historyEnabled; // History 를 끄면 배지도 동작하지 않는다
   $('accountText').textContent = cfg.kakaoEmail || '(설정되지 않음)';
 }
 
@@ -158,6 +163,8 @@ async function saveSettings() {
     kakaoEmail: $('kakaoEmail').value.trim(),
     stepTimeoutMs: clamp($('stepTimeoutMs').value, 1000, 30000, DEFAULTS.stepTimeoutMs),
     maxAttempts: clamp($('maxAttempts').value, 1, 10, DEFAULTS.maxAttempts),
+    historyEnabled: $('historyEnabled').checked,
+    saleBadgeEnabled: $('saleBadgeEnabled').checked,
   };
   await chrome.storage.sync.set(cfg);
   await send({ type: 'configUpdated' }); // 계정을 채웠으면 '설정 필요' 배지를 해제
@@ -186,7 +193,7 @@ $('setupBtn').addEventListener('click', () => {
   $('kakaoEmail').focus();
 });
 
-['enabled', 'kakaoEmail', 'stepTimeoutMs', 'maxAttempts'].forEach((id) => {
+['enabled', 'kakaoEmail', 'stepTimeoutMs', 'maxAttempts', 'historyEnabled', 'saleBadgeEnabled'].forEach((id) => {
   $(id).addEventListener('change', saveSettings);
 });
 
