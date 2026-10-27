@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "POE 카카오 자동 로그인 (비공식)",
+  "version": "1.1.0",
+  "description": "카카오게임즈 POE 카카오 간편로그인 자동 진행, POE2 게임 시작 자동 클릭, 웹 거래소 판매 내역(History) 보기를 돕는 비공식 확장입니다.",
+  "permissions": [
+    "storage",
+    "notifications",
+    "contentSettings"
+  ],
+  "host_permissions": [
+    "https://*.kakaogames.com/*",
+    "https://accounts.kakao.com/*",
+    "https://kauth.kakao.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.kakaogames.com/*",
+        "https://accounts.kakao.com/*",
+        "https://kauth.kakao.com/*"
+      ],
+      "js": [
+        "content/dom.js",
+        "content/autologin.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://poe.kakaogames.com/trade2*"
+      ],
+      "js": [
+        "content/history.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_title": "POE 카카오 자동 로그인 (비공식)",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "options_ui": {
+    "page": "popup/popup.html",
+    "open_in_tab": true
+  }
+}

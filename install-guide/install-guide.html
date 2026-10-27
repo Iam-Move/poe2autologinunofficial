@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POE 카카오 자동 로그인 — 설치 방법</title>
+<style>
+  :root{ --key:#7c5c00; --ink:#1b2230; --muted:#5b6577; --line:#e5e9f0; --bg:#f7f7f4; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif; line-height:1.6; }
+  .wrap{ max-width:820px; margin:0 auto; padding:40px 20px 80px; }
+  header{ display:flex; align-items:center; gap:14px; margin-bottom:8px; }
+  .logo{ width:52px; height:52px; border-radius:50%; flex:none; }
+  h1{ font-size:24px; margin:0; }
+  .sub{ color:var(--muted); margin:2px 0 28px; }
+  .step{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px 22px;
+    margin:16px 0; box-shadow:0 1px 3px rgba(20,30,50,.04); }
+  .step-head{ display:flex; align-items:baseline; gap:12px; }
+  .num{ flex:none; width:30px; height:30px; border-radius:50%; background:var(--key); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; }
+  .step-title{ font-size:17px; font-weight:700; margin:0; }
+  .once{ color:#b00020; font-size:14px; }
+  .desc{ color:var(--muted); margin:8px 0 0 42px; }
+  .desc b{ color:var(--ink); }
+  .desc code{ background:#f2f0e6; color:#5d4a00; padding:1px 6px; border-radius:5px; font-size:.92em; }
+  .desc ul{ margin:8px 0 0; padding-left:18px; }
+  .desc li{ margin:4px 0; }
+  /* 화면 캡쳐 자리 */
+  .shot{ margin:14px 0 0 42px; }
+  .shot img{ display:block; max-width:100%; border:1px solid var(--line); border-radius:10px; }
+  .shot .ph{ display:flex; align-items:center; justify-content:center; text-align:center;
+    min-height:150px; border:2px dashed #c3ccdb; border-radius:10px; color:#93a0b5;
+    background:#fafcff; font-size:14px; padding:16px; }
+  .shot.has-img .ph{ display:none; }
+  .shot .ph code{ color:#6b7890; }
+  .shot--sm img{ max-width:340px; }
+  .tip{ margin:14px 0 0 42px; background:#fffbe8; border:1px solid #f0dca0; border-radius:10px;
+    padding:12px 14px; font-size:14px; color:#5d4a00; }
+  .tip img{ display:block; max-width:320px; margin:10px 0 0; border:1px solid #e8dcb0;
+    border-radius:8px; background:#fff; padding:5px; }
+  .note{ margin-top:26px; background:#fff8dd; border:1px solid #f0dca0; border-radius:12px;
+    padding:18px 20px; color:#4a3a00; }
+  .note h3{ margin:0 0 8px; font-size:17px; }
+  .note p{ margin:0; }
+  .note ol{ margin:8px 0 0; padding-left:20px; }
+  .note li{ margin:5px 0; }
+  .note b{ color:#000; }
+  .done{ background:#eef9f0; border-color:#bfe3c8; color:#1c4527; }
+  footer{ margin-top:34px; color:#98a3b5; font-size:13px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <img class="logo" src="../icons/icon128.png" alt="">
+    <div>
+      <h1>POE 카카오 자동 로그인 — 설치 방법</h1>
+    </div>
+  </header>
+  <p class="sub">
+    거래소에 들어갈 때마다 반복했던 <b>로그인 → 카카오 로그인 → 계정 선택</b> 3번의 클릭을
+    크롬이 알아서 눌러주는 확장 프로그램입니다. 아래 단계를 순서대로 따라 하세요.
+  </p>
+
+  <!-- 1 -->
+  <section class="step">
+    <div class="step-head">
+      <div class="num">1</div>
+      <h2 class="step-title">확장 프로그램 관리 페이지 열기</h2>
+    </div>
+    <p class="desc">크롬 주소창에 <code>chrome://extensions</code> 를 입력하고 Enter 를 누릅니다.</p>
+    <figure class="shot">
+      <img src="images/step1.png" alt="1단계 화면" onload="this.closest('.shot').classList.add('has-img')" onerror="this.remove()">
+      <figcaption class="ph">📷 여기에 화면 캡쳐를 넣으세요 — <code>install-guide/images/step1.png</code></figcaption>
+    </figure>
+  </section>
+
+  <!-- 2 -->
+  <section class="step">
+    <div class="step-head">
+      <div class="num">2</div>
+      <h2 class="step-title">개발자 모드 켜기</h2>
+    </div>
+    <p class="desc">
+      오른쪽 위의 <b>개발자 모드</b> 토글을 켭니다.
+      켜면 왼쪽 위에 버튼 3개가 새로 나타납니다.
+    </p>
+    <figure class="shot">
+      <img src="images/step2.png" alt="2단계 화면" onload="this.closest('.shot').classList.add('has-img')" onerror="this.remove()">
+      <figcaption class="ph">📷 여기에 화면 캡쳐를 넣으세요 — <code>install-guide/images/step2.png</code></figcaption>
+    </figure>
+  </section>
+
+  <!-- 3 -->
+  <section class="step">
+    <div class="step-head">
+      <div class="num">3</div>
+      <h2 class="step-title">"압축해제된 확장 프로그램 로드" 클릭</h2>
+    </div>
+    <p class="desc">왼쪽 위에 나타난 <b>압축해제된 확장 프로그램 로드</b> 버튼을 클릭합니다.</p>
+    <figure class="shot">
+      <img src="images/step3.png" alt="3단계 화면" onload="this.closest('.shot').classList.add('has-img')" onerror="this.remove()">
+      <figcaption class="ph">📷 여기에 화면 캡쳐를 넣으세요 — <code>install-guide/images/step3.png</code></figcaption>
+    </figure>
+  </section>
+
+  <!-- 4 -->
+  <section class="step">
+    <div class="step-head">
+      <div class="num">4</div>
+      <h2 class="step-title">KakaoAutoLogin 폴더 선택</h2>
+    </div>
+    <p class="desc">
+      <code>KakaoAutoLogin</code> 폴더로 들어가서, 안에
+      <code>content</code> · <code>icons</code> · <code>images</code> ·
+      <code>install-guide</code> · <code>popup</code> 폴더가 보이는 상태에서
+      <b>폴더 선택</b>을 누릅니다.
+      <br>안쪽 폴더를 하나 더 들어가면 안 됩니다. (<code>manifest.json</code> 이 있는 위치입니다.)
+    </p>
+    <figure class="shot">
+      <img src="images/step4.png" alt="4단계 화면" onload="this.closest('.shot').classList.add('has-img')" onerror="this.remove()">
+      <figcaption class="ph">📷 여기에 화면 캡쳐를 넣으세요 — <code>install-guide/images/step4.png</code></figcaption>
+    </figure>
+    <div class="tip">
+      압축 파일(zip)로 받았다면 <b>먼저 압축을 풀어야</b> 합니다.
+      그리고 이 폴더를 나중에 다른 곳으로 옮기면 확장이 동작하지 않으니,
+      옮기지 않을 위치에 두고 설치하세요.
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="step">
+    <div class="step-head">
+      <div class="num">5</div>
+      <h2 class="step-title">아이콘 고정 &amp; 내 카카오 계정 입력 <span class="once">(처음 한 번만)</span></h2>
+    </div>
+    <p class="desc">
+      툴바의 퍼즐(🧩) 아이콘 → 핀을 누르면 노란 <b>P</b> 아이콘이 상단에 고정됩니다.
+      그 아이콘을 눌러 아래처럼 설정해 주세요.
+    </p>
+    <div class="desc">
+      <ul>
+        <li>처음에는 <b>"설정이 필요합니다"</b> 가 뜨는 게 정상입니다. (미리 입력된 계정은 없습니다)</li>
+        <li>오른쪽 위 <b>스위치가 켜져</b> 있는지 확인합니다.</li>
+        <li><b>[설정 탭에서 계정 입력하기]</b> 를 누르고 <b>내 카카오 계정 이메일</b>을 입력합니다.
+          카카오 계정 선택 화면에 보이는 그 이메일을 그대로 적으면 됩니다.</li>
+        <li>입력하면 <b>바로 저장</b>됩니다. 저장 버튼은 없습니다.</li>
+      </ul>
+    </div>
+    <figure class="shot shot--sm">
+      <img src="images/step5.png" alt="5단계 화면" onload="this.closest('.shot').classList.add('has-img')" onerror="this.remove()">
+      <figcaption class="ph">📷 여기에 화면 캡쳐를 넣으세요 — <code>install-guide/images/step5.png</code></figcaption>
+    </figure>
+    <div class="tip">
+      비밀번호는 저장하지도, 입력하지도 않습니다. 브라우저에 이미 기억된
+      카카오 "간편로그인" 계정을 <b>대신 눌러줄 뿐</b>입니다.
+      입력한 이메일은 이 크롬에만 저장되고 폴더(파일)에는 들어가지 않습니다.
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="step">
+    <div class="step-head">
+      <div class="num">6</div>
+      <h2 class="step-title">런처에서 "거래소" 눌러 확인</h2>
+    </div>
+    <p class="desc">
+      <b>PoE 2 Unofficial Launcher</b> 왼쪽 아래 <b>서비스 채널</b>이 <code>kakaogames</code> 인 상태에서
+      <b>거래소</b> 버튼을 누릅니다.
+      크롬이 열리고 <b>클릭 한 번 없이</b> 로그인된 거래소 화면까지 들어가면 성공입니다.
+    </p>
+    <figure class="shot">
+      <img src="images/step6.png" alt="6단계 화면" onload="this.closest('.shot').classList.add('has-img')" onerror="this.remove()">
+      <figcaption class="ph">📷 여기에 화면 캡쳐를 넣으세요 — <code>install-guide/images/step6.png</code></figcaption>
+    </figure>
+    <div class="tip">
+      <b>가끔 이런 화면이 먼저 나옵니다.</b>
+      사이트가 "사람이 맞는지" 확인하는 검사인데, 사람이 직접 눌러야만 통과되는 것이라
+      이 확장은 일부러 건드리지 않습니다.
+      <b>네모 칸을 한 번만 클릭</b>해 주세요. 통과하면 자동 로그인이 알아서 이어집니다.
+      <img src="../images/captcha-example.png" alt="사람인지 확인하십시오 체크박스">
+    </div>
+  </section>
+
+  <div class="note done">
+    <h3>✅ 여기까지 하면 끝입니다</h3>
+    <p>
+      6단계에서 자동 로그인이 한 번 되는 것만 확인하면,
+      <b>이후로는 설정창을 다시 열 일이 없습니다.</b><br>
+      PC를 재부팅해서 로그인이 풀려도 —
+      <b>Unofficial Launcher에서 "거래소"만 누르면</b> 로그인까지 알아서 처리됩니다.
+    </p>
+  </div>
+
+  <div class="note">
+    <h3>잘 안 될 때</h3>
+    <ol>
+      <li>확장 아이콘을 눌러 <b>스위치가 켜져</b> 있는지 확인</li>
+      <li><b>설정</b> 탭의 계정 이메일이 실제 로그인하는 카카오 계정과 같은지 확인</li>
+      <li>아이콘에 빨간 <b>!</b> 배지가 떴다면 팝업 <b>상태</b> 탭에 실패 이유가 한국어로 적혀 있습니다.
+        <b>[다시 시도할 수 있게 초기화]</b> 를 누른 뒤 다시 시도하세요.</li>
+      <li>크롬 프로필(계정)을 여러 개 쓴다면 <b>프로필마다 따로 설치</b>해야 합니다.</li>
+    </ol>
+  </div>
+
+  <footer>POE 카카오 자동 로그인 · 설치 안내</footer>
+
+</div>
+</body>
+</html>
