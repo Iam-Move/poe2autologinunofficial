@@ -137,7 +137,7 @@ async function resetFlow({ log = true } = {}) {
 // 거래소 API 는 요청 한도가 빡빡하다 -> 30분에 1회만 확인한다.
 const SALE_ALARM = 'kal-sale-check';
 const SALE_PERIOD_MIN = 30;
-const SALE_BADGE_COLOR = '#188038';
+const SALE_BADGE_COLOR = '#d93025'; // 눈에 잘 띄게 빨강 (실패 배지는 '!', 판매는 숫자라 구분된다)
 const HISTORY_API = 'https://poe.kakaogames.com/api/trade2/history/';
 const DEFAULT_RETRY_SEC = 60;
 
@@ -187,7 +187,15 @@ function rateLimitWaitSec(headers) {
 async function checkSales() {
   const sales = await getSales();
   // 거래소에서 History 를 한 번도 열지 않았으면 어느 리그를 볼지 모른다
-  if (!sales.league || Date.now() < sales.blockedUntil) return;
+  if (!sales.league) {
+    console.log('[KakaoAutoLogin] 판매 내역 확인 건너뜀: 거래소에서 History 를 한 번 열어야 리그가 정해집니다.');
+    return;
+  }
+  if (Date.now() < sales.blockedUntil) {
+    const left = Math.ceil((sales.blockedUntil - Date.now()) / 1000);
+    console.log(`[KakaoAutoLogin] 판매 내역 확인 건너뜀: 요청 제한 대기 중 (${left}초 남음)`);
+    return;
+  }
 
   let res;
   try {
@@ -223,6 +231,7 @@ async function checkSales() {
     count,
     blockedUntil: waitSec ? Date.now() + waitSec * 1000 : 0,
   });
+  console.log(`[KakaoAutoLogin] 판매 내역 확인 (${sales.league}): 새 판매 ${count}건`);
   await refreshSaleBadge();
 }
 
