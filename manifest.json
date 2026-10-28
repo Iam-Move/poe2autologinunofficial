@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "POE 카카오 자동 로그인 (비공식)",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "카카오게임즈 POE 카카오 간편로그인 자동 진행, POE2 게임 시작 자동 클릭, 웹 거래소 판매 내역(History) 보기를 돕는 비공식 확장입니다.",
   "permissions": [
     "storage",

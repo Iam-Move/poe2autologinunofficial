@@ -10,6 +10,7 @@ const DEFAULTS = {
 };
 const TRADE_URL = 'https://poe.kakaogames.com/trade2';
 const GAME_URL = 'https://pathofexile2.kakaogames.com/main';
+const CONTACT_URL = 'https://open.kakao.com/me/iammove'; // 문의 · 건의 (카카오톡 오픈채팅)
 
 const $ = (id) => document.getElementById(id);
 
@@ -207,6 +208,13 @@ $('startGameBtn').addEventListener('click', async () => {
   await chrome.tabs.create({ url: GAME_URL });
   window.close();
 });
+
+async function openContact() {
+  await chrome.tabs.create({ url: CONTACT_URL });
+  window.close();
+}
+$('contactLink').addEventListener('click', openContact);
+$('contactBtn').addEventListener('click', openContact);
 
 $('toggleLogBtn').addEventListener('click', () => {
   const box = $('logBox');

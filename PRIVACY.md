@@ -46,4 +46,5 @@ POE2 게임 실행 창이 차단되지 않도록 `https://pathofexile2.kakaogame
 
 ## 7. 문의
 
-https://github.com/Iam-Move/poe2autologinunofficial/issues
+- 카카오톡 오픈채팅: https://open.kakao.com/me/iammove
+- GitHub Issues: https://github.com/Iam-Move/poe2autologinunofficial/issues

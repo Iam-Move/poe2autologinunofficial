@@ -246,6 +246,13 @@
       padding: 7px 8px; border-bottom: 1px solid #262626;
     }
     .row:hover { background: #1e1e1e; }
+    .row--new { background: rgba(217, 48, 37, .08); box-shadow: inset 3px 0 0 #d93025; }
+    .row--new:hover { background: rgba(217, 48, 37, .14); }
+    .new, .newcount {
+      flex: none; padding: 1px 6px; border-radius: 9px;
+      background: #d93025; color: #fff; font-size: 10.5px; font-weight: 700; line-height: 16px;
+    }
+    .newcount { margin-left: 8px; font-size: 11px; vertical-align: 2px; }
     .sold { color: #888; font-size: 12px; flex: none; }
     .name { font-weight: 700; cursor: default; flex: none; }
     .price { display: flex; align-items: center; gap: 4px; color: #bbb; flex: none; }
@@ -319,14 +326,26 @@
     if (e.key === 'Escape') closeUi();
   }
 
-  function openUi() {
+  // 창을 연 시점의 '마지막으로 본 판매 시각'. 열자마자 markSeen() 이 갱신하므로 미리 떠 둔다.
+  // 창이 열려 있는 동안(↻ 포함)은 같은 값을 써서 NEW 표시가 사라지지 않게 한다.
+  let newSince = null;
+
+  async function openUi() {
     if (!host) buildUi();
     if (!host.isConnected) document.body.append(host);
     document.addEventListener('keydown', onKeydown, true);
+    newSince = null;
+    try {
+      const { sales } = await chrome.storage.local.get({ sales: null });
+      if (sales && sales.seenTime > 0) newSince = { league: sales.league, seenTime: sales.seenTime };
+    } catch (_) {
+      /* 확장이 새로고침된 직후라 연결이 끊긴 경우 - NEW 표시 없이 연다 */
+    }
     render();
   }
 
   function closeUi() {
+    newSince = null;
     clearInterval(countdownTimer);
     if (host) host.remove();
     if (ui) ui.tip.hidden = true;
@@ -456,12 +475,20 @@
       return;
     }
     ui.body.textContent = '';
-    for (const entry of rows) ui.body.append(buildRow(entry, currencies));
+    const since = newSince && newSince.league === league ? newSince.seenTime : 0;
+    let newCount = 0;
+    for (const entry of rows) {
+      const isNew = since > 0 && Date.parse(entry.time) > since;
+      if (isNew) newCount += 1;
+      ui.body.append(buildRow(entry, currencies, isNew));
+    }
+    if (newCount) ui.title.append(el('span', 'newcount', `새 판매 ${newCount}`));
   }
 
-  function buildRow(entry, currencies) {
+  function buildRow(entry, currencies, isNew) {
     const item = entry.item || {};
-    const row = el('div', 'row');
+    const row = el('div', isNew ? 'row row--new' : 'row');
+    if (isNew) row.append(el('span', 'new', 'NEW'));
     row.append(el('span', 'sold', '판매됨'));
 
     const name = el('span', 'name', itemTitle(item));
@@ -609,6 +636,27 @@
   /* ---------- 메뉴 버튼 주입 ---------- */
 
   let enabled = false; // 팝업 설정의 '거래소 History 버튼'
+  let saleCount = 0; // background 가 30분마다 센 새 판매 개수 (chrome.storage.local.sales.count)
+
+  /** History 버튼 좌측 상단의 빨간 숫자 배지. 버튼을 다시 붙일 때도 호출된다. */
+  function updateButtonBadge() {
+    const a = document.querySelector('li.menu-history > a');
+    if (!a) return;
+    let badge = a.querySelector('.kal-history-badge');
+    if (!badge) {
+      badge = el('span', 'kal-history-badge');
+      // 페이지 DOM 이라 사이트 CSS 와 섞이지 않게 inline 으로 지정한다
+      badge.style.cssText =
+        'position:absolute;top:2px;left:2px;min-width:16px;height:16px;padding:0 4px;' +
+        'box-sizing:border-box;border-radius:8px;background:#d93025;color:#fff;' +
+        'font:700 10px/16px sans-serif;text-align:center;pointer-events:none;';
+      a.style.position = 'relative';
+      a.append(badge);
+    }
+    badge.textContent = saleCount > 99 ? '99+' : String(saleCount);
+    badge.style.display = saleCount > 0 ? '' : 'none';
+    a.title = saleCount > 0 ? `거래 내역 · 새 판매 ${saleCount}건` : '거래 내역';
+  }
 
   function injectButton() {
     if (!enabled) return;
@@ -625,6 +673,7 @@
 
     // li 가 float:right 라 DOM 끝에 붙이면 화면에서는 [설정] 왼쪽에 놓인다
     menu.append(li);
+    updateButtonBadge();
     log('History 버튼 추가');
   }
 
@@ -657,6 +706,14 @@
   // 팝업에서 토글하면 열린 탭에도 바로 반영한다
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'sync' && changes.historyEnabled) apply(changes.historyEnabled.newValue !== false);
+    if (area === 'local' && changes.sales) {
+      saleCount = (changes.sales.newValue && changes.sales.newValue.count) || 0;
+      updateButtonBadge();
+    }
+  });
+  chrome.storage.local.get({ sales: null }, ({ sales }) => {
+    saleCount = (sales && sales.count) || 0;
+    updateButtonBadge();
   });
   // 거래소는 SPA 라 메뉴가 다시 그려질 수 있다 -> 사라지면 다시 붙인다
   new MutationObserver(injectButton).observe(document.documentElement, {
