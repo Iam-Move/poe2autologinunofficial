@@ -159,6 +159,23 @@ body {
 .logs__list .lv-success { color: var(--ok); }
 .logs__empty { color: var(--fg-dim); font-size: 12px; padding: 6px 0; }
 
+/* ── 버전 ── */
+.kv--stack { display: flex; gap: 10px; margin: 0 0 10px; }
+.kv--stack > div { flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
+.kv--stack dt { display: block; }
+.kv--stack dd { font-size: 15px; }
+.kv--stack dd.is-new { color: var(--err); }
+#updateMsg:empty { display: none; }
+#updateMsg { margin: 0 0 10px; }
+.changelog { list-style: none; margin: 0; padding: 0; }
+.changelog li { padding: 8px 0; border-bottom: 1px dashed var(--border); }
+.changelog li:last-child { border-bottom: 0; }
+.changelog__head { display: flex; justify-content: space-between; align-items: baseline; }
+.changelog__head strong { font-size: 13px; }
+.changelog__head time { color: var(--fg-dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.changelog ul { margin: 4px 0 0; padding-left: 16px; font-size: 12px; }
+.changelog .is-current strong::after { content: ' (현재)'; color: var(--ok); font-weight: 600; font-size: 11.5px; }
+
 /* ── 설정 ── */
 .field { margin-bottom: 16px; }
 .field--row { display: flex; gap: 12px; }

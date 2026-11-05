@@ -24,6 +24,7 @@
       <button class="tabs__btn is-active" data-tab="status" role="tab">상태</button>
       <button class="tabs__btn" data-tab="settings" role="tab">설정</button>
       <button class="tabs__btn" data-tab="help" role="tab">도움말</button>
+      <button class="tabs__btn" data-tab="version" role="tab">버전</button>
     </nav>
 
     <main>
@@ -166,6 +167,26 @@
         <h3>문의 · 건의</h3>
         <p>오류 제보나 기능 건의는 카카오톡 오픈채팅으로 보내주세요.</p>
         <button class="btn" id="contactBtn">문의하기 (카카오톡 오픈채팅)</button>
+      </section>
+
+      <!-- ── 버전 ── -->
+      <section class="panel" data-panel="version">
+        <dl class="kv kv--stack">
+          <div><dt>현재 버전</dt><dd id="curVersion">-</dd></div>
+          <div><dt>최신 버전</dt><dd id="latestVersion">확인 전</dd></div>
+        </dl>
+        <p class="hint" id="updateMsg"></p>
+        <div class="actions">
+          <button class="btn" id="checkUpdateBtn">업데이트 확인</button>
+          <button class="btn btn--primary" id="applyUpdateBtn" hidden>지금 업데이트</button>
+        </div>
+        <p class="hint">
+          웹 스토어에서 설치한 확장은 크롬이 몇 시간마다 알아서 업데이트합니다.
+          기다리기 싫으면 <b>업데이트 확인</b>을 눌러 바로 받을 수 있습니다.
+        </p>
+
+        <h3>업데이트 내역</h3>
+        <ul class="changelog" id="changelog"></ul>
       </section>
     </main>
 
