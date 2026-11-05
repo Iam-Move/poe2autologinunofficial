@@ -178,9 +178,10 @@
   /** 인트로 팝업이 뜨면 [오늘 하루 그만 보기]를 누른다. 팝업이 없으면 잠깐 기다렸다 넘어간다. */
   async function dismissIntroModal() {
     const btn = await D.waitFor(() => {
-      const modal = document.querySelector('.modal--intro');
+      // 2026-11 개편 후: #layerIntro.popup_intro / button.btn_today, 이전: .modal--intro / .modal__button-block
+      const modal = document.querySelector('#layerIntro, .popup_intro, .modal--intro');
       if (!modal || !D.isVisible(modal)) return null;
-      const direct = modal.querySelector('.modal__button-block');
+      const direct = modal.querySelector('.btn_today, .modal__button-block');
       if (direct && D.isVisible(direct)) return direct;
       for (const el of modal.querySelectorAll('button, a')) {
         const compact = D.labelOf(el).replace(/\s/g, '');
@@ -203,9 +204,15 @@
     if (!res.launch) return;
 
     const btn = await D.waitFor(() => {
-      const link = document.querySelector('a.main-start__link');
-      if (link && D.isVisible(link)) return link;
-      return D.findClickableByText(['게임 시작', '게임시작'], { exact: true });
+      // 2026-11 개편 후: 상단 메뉴의 button.btn_start ("GAME START"), 이전: a.main-start__link ("게임 시작")
+      for (const sel of ['button.btn_start', 'a.main-start__link']) {
+        const el = document.querySelector(sel);
+        if (el && D.isVisible(el)) return el;
+      }
+      for (const el of document.querySelectorAll('button, a')) {
+        if (/^(게임\s*시작|game\s*start)$/i.test(D.labelOf(el).trim()) && D.isVisible(el)) return el;
+      }
+      return D.findClickableByText(['게임 시작', '게임시작', 'GAME START', 'Game Start'], { exact: true });
     }, { timeout: cfg.stepTimeoutMs });
 
     if (!btn) {
