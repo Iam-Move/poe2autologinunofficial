@@ -204,11 +204,14 @@
     if (!res.launch) return;
 
     const btn = await D.waitFor(() => {
-      // 2026-11 개편 후: 상단 메뉴의 button.btn_start ("GAME START"), 이전: a.main-start__link ("게임 시작")
-      for (const sel of ['button.btn_start', 'a.main-start__link']) {
-        const el = document.querySelector(sel);
-        if (el && D.isVisible(el)) return el;
-      }
+      // 2026-11 개편 후: 상단 메뉴의 button.btn_start ("GAME START").
+      // 창 너비 1280px 이하에서는 메뉴가 햄버거 안으로 숨겨져(display:none) 보이지 않지만,
+      // el.click() 은 숨겨진 버튼에도 동작하므로 보임 여부를 따지지 않는다.
+      const start = document.querySelector('.doc-header button.btn_start, button.btn_start');
+      if (start) return start;
+      // 이전: a.main-start__link ("게임 시작")
+      const old = document.querySelector('a.main-start__link');
+      if (old && D.isVisible(old)) return old;
       for (const el of document.querySelectorAll('button, a')) {
         if (/^(게임\s*시작|game\s*start)$/i.test(D.labelOf(el).trim()) && D.isVisible(el)) return el;
       }
