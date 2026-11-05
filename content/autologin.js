@@ -269,8 +269,59 @@
       return;
     }
 
+    // 행이 그려진 직후에는 페이지 스크립트가 아직 클릭 처리기를 붙이지 않았을 수 있다.
+    // (이때 누르면 클릭이 허공에 사라져 "어떨 땐 되고 어떨 땐 안 되는" 증상이 난다)
+    await pageSettled();
+
     log(hit.kind === 'account' ? `3단계: ${cfg.kakaoEmail} 계정 클릭` : '동의/계속 버튼 클릭');
     D.clickElement(hit.el);
+
+    if (hit.kind === 'account') await retryAccountClick(location.href);
+  }
+
+  /** 문서 로드가 끝나고 잠깐 더 기다린다. */
+  async function pageSettled() {
+    if (document.readyState !== 'complete') {
+      await new Promise((r) => window.addEventListener('load', r, { once: true }));
+    }
+    await sleep(500);
+  }
+
+  /** 계정 클릭 후 페이지가 넘어가지 않으면 같은 계정을 다시 누른다 (최대 2회, 단계 횟수 제한 적용). */
+  async function retryAccountClick(urlBefore) {
+    for (let i = 1; i <= 2; i += 1) {
+      await sleep(3000);
+      if (location.href !== urlBefore) return; // 이미 다음 화면으로 넘어감
+      const row = D.findRowByText(cfg.kakaoEmail);
+      if (!row) return; // 화면이 바뀌는 중
+      const res = await send({ type: 'step', name: 'account', url: location.href });
+      if (res.allowed === false) {
+        log('자동 진행 중단:', res.reason);
+        return;
+      }
+      log(`3단계: 반응이 없어 계정을 다시 클릭 (${i}/2)`);
+      pressLikeUser(row);
+    }
+  }
+
+  /** el.click() 만으로 반응하지 않는 화면을 위해 마우스 누름~뗌~클릭 순서를 모두 보낸다. */
+  function pressLikeUser(el) {
+    try {
+      el.scrollIntoView({ block: 'center' });
+    } catch (_) {
+      /* 무시 */
+    }
+    const r = el.getBoundingClientRect();
+    const opts = { bubbles: true, cancelable: true, view: window, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, button: 0 };
+    el.dispatchEvent(new PointerEvent('pointerdown', { ...opts, pointerType: 'mouse', isPrimary: true }));
+    el.dispatchEvent(new MouseEvent('mousedown', opts));
+    el.dispatchEvent(new PointerEvent('pointerup', { ...opts, pointerType: 'mouse', isPrimary: true }));
+    el.dispatchEvent(new MouseEvent('mouseup', opts));
+    el.click();
+  }
+
+  function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
   }
 
   async function reportKakaoFailure() {
